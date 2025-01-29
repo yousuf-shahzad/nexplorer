@@ -41,15 +41,6 @@ class NetworkFileExplorer(QMainWindow):
         self.network_drive_selector.currentIndexChanged.connect(self.on_network_drive_selected)
         self.toolbar.addWidget(self.network_drive_selector)
 
-        # Map/Unmap Network Drive Buttons
-        self.map_drive_action = QAction(QIcon.fromTheme("network-workgroup"), "Map Network Drive", self)
-        self.map_drive_action.triggered.connect(self.map_network_drive)
-        self.toolbar.addAction(self.map_drive_action)
-
-        self.unmap_drive_action = QAction(QIcon.fromTheme("network-offline"), "Unmap Network Drive", self)
-        self.unmap_drive_action.triggered.connect(self.unmap_network_drive)
-        self.toolbar.addAction(self.unmap_drive_action)
-
         # Refresh Button
         self.refresh_action = QAction(QIcon.fromTheme("view-refresh"), "Refresh", self)
         self.refresh_action.triggered.connect(self.refresh_view)
@@ -208,48 +199,6 @@ class NetworkFileExplorer(QMainWindow):
         if self.current_index < len(self.history) - 1:
             self.current_index += 1
             self.navigate_to_path(self.history[self.current_index])
-
-    def map_network_drive(self):
-        """Map a network drive using a dialog."""
-        drive_letter, ok = QInputDialog.getText(self, "Map Network Drive", "Enter Drive Letter (e.g., Z):")
-        if ok and drive_letter:
-            unc_path, ok = QInputDialog.getText(self, "Map Network Drive", "Enter UNC Path (e.g., \\\\Server\\SharedFolder):")
-            if ok and unc_path:
-                drive_letter = f"{drive_letter.upper()}:\\"
-                if self.map_drive_windows(drive_letter, unc_path):
-                    QMessageBox.information(self, "Success", f"Drive {drive_letter} mapped to {unc_path}.")
-                    self.detect_network_drives()
-                else:
-                    QMessageBox.warning(self, "Error", "Failed to map network drive.")
-
-    def unmap_network_drive(self):
-        """Unmap a network drive using a dialog."""
-        drive_letter, ok = QInputDialog.getText(self, "Unmap Network Drive", "Enter Drive Letter (e.g., Z):")
-        if ok and drive_letter:
-            drive_letter = f"{drive_letter.upper()}:\\"
-            if self.unmap_drive_windows(drive_letter):
-                QMessageBox.information(self, "Success", f"Drive {drive_letter} unmapped.")
-                self.detect_network_drives()
-            else:
-                QMessageBox.warning(self, "Error", "Failed to unmap network drive.")
-
-    def map_drive_windows(self, drive_letter, unc_path):
-        """Map a network drive on Windows."""
-        try:
-            result = ctypes.windll.WNetAddConnection2W(0, None, unc_path, None, drive_letter)
-            return result == 0
-        except Exception as e:
-            print(f"Error mapping drive: {e}")
-            return False
-
-    def unmap_drive_windows(self, drive_letter):
-        """Unmap a network drive on Windows."""
-        try:
-            result = ctypes.windll.WNetCancelConnection2W(drive_letter, 0, True)
-            return result == 0
-        except Exception as e:
-            print(f"Error unmapping drive: {e}")
-            return False
 
     def show_filter_dialog(self):
         """Show a dialog to filter files by type or size."""
